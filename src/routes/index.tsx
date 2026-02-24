@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { ClientOnly } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth, useAutoSignin } from 'react-oidc-context';
 import { Button, Input } from '@base-ui/react';
 import { tables, reducers } from '../module_bindings';
@@ -79,6 +79,11 @@ function ChatUI() {
 
   const userMap = new Map(users.map(u => [u.identity.toHexString(), u.username]));
   const myIdentityHex = myIdentity?.toHexString();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,8 +93,8 @@ function ChatUI() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="flex items-center justify-between border-b bg-white px-4 py-3 shadow-sm">
+    <div className="flex h-screen flex-col bg-gray-50">
+      <header className="flex shrink-0 items-center justify-between border-b bg-white px-4 py-3 shadow-sm">
         <h1 className="text-xl font-semibold text-gray-800">
           Spacetime Chat
         </h1>
@@ -101,8 +106,8 @@ function ChatUI() {
         </Button>
       </header>
 
-      <div className="flex flex-1 flex-col overflow-hidden p-4">
-        <div className="mb-4 flex items-center gap-2">
+      <div className="flex min-h-0 flex-1 flex-col p-4">
+        <div className="mb-2 flex shrink-0 items-center gap-2">
           <span
             className={`inline-block h-2 w-2 rounded-full ${
               connected ? 'bg-green-500' : 'bg-red-500'
@@ -113,7 +118,7 @@ function ChatUI() {
           </span>
         </div>
 
-        <div className="mb-4 flex-1 overflow-y-auto rounded-lg border bg-white p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border bg-white p-4">
           <div className="flex flex-col gap-3">
             {messages.length === 0 ? (
               <p className="text-gray-500">No messages yet. Say hello!</p>
@@ -142,10 +147,14 @@ function ChatUI() {
                 );
               })
             )}
+            <div ref={messagesEndRef} />
           </div>
         </div>
 
-        <form onSubmit={handleSend} className="flex gap-2">
+        <form
+          onSubmit={handleSend}
+          className="mt-4 flex shrink-0 gap-2 bg-gray-50 pb-2"
+        >
           <Input
             value={text}
             onValueChange={value => setText(value)}
