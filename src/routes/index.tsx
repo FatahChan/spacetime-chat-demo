@@ -71,13 +71,14 @@ function ChatUI() {
   const [text, setText] = useState('');
   const auth = useAuth();
   const conn = useSpacetimeDB();
-  const { isActive: connected } = conn;
+  const { isActive: connected, identity: myIdentity } = conn;
 
   const [users] = useSpacetimeDBQuery(tables.user);
   const [messages] = useSpacetimeDBQuery(tables.message);
   const sendMessage = useReducer(reducers.sendMessage);
 
   const userMap = new Map(users.map(u => [u.identity.toHexString(), u.username]));
+  const myIdentityHex = myIdentity?.toHexString();
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,21 +114,33 @@ function ChatUI() {
         </div>
 
         <div className="mb-4 flex-1 overflow-y-auto rounded-lg border bg-white p-4">
-          <div className="space-y-2">
+          <div className="flex flex-col gap-3">
             {messages.length === 0 ? (
               <p className="text-gray-500">No messages yet. Say hello!</p>
             ) : (
-              messages.map(msg => (
-                <div
-                  key={msg.id.toString()}
-                  className="rounded-lg bg-gray-100 px-3 py-2"
-                >
-                  <span className="font-medium text-gray-800">
-                    {userMap.get(msg.senderId.toHexString()) ?? 'Unknown'}:
-                  </span>{' '}
-                  <span className="text-gray-700">{msg.text}</span>
-                </div>
-              ))
+              messages.map(msg => {
+                const isMe = myIdentityHex && msg.senderId.toHexString() === myIdentityHex;
+                const displayName = isMe ? 'You' : (userMap.get(msg.senderId.toHexString()) ?? 'Unknown');
+                return (
+                  <div
+                    key={msg.id.toString()}
+                    className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                        isMe
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      <span className={`text-xs font-medium ${isMe ? 'text-blue-100' : 'text-gray-500'}`}>
+                        {displayName}
+                      </span>
+                      <p className={isMe ? 'text-white' : 'text-gray-700'}>{msg.text}</p>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
