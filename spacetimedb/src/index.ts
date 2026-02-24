@@ -1,6 +1,9 @@
 import { schema, table, t } from 'spacetimedb/server';
 import { SenderError } from 'spacetimedb/server';
 
+const RATE_LIMIT_WINDOW_MICROS = 60_000_000n; // 60 seconds
+const RATE_LIMIT_MAX_PER_WINDOW = 10;
+
 const spacetimedb = schema({
   user: table(
     {
@@ -29,6 +32,17 @@ const spacetimedb = schema({
       senderId: t.identity(),
       text: t.string(),
       createdAt: t.timestamp(),
+    }
+  ),
+  rateLimitTracker: table(
+    {
+      name: 'rate_limit_tracker',
+      // private: clients don't need to subscribe
+    },
+    {
+      identity: t.identity().primaryKey(),
+      windowStart: t.timestamp(),
+      count: t.u64(),
     }
   ),
 });
@@ -70,6 +84,35 @@ export const send_message = spacetimedb.reducer(
     if (!trimmed) throw new SenderError('Message text cannot be empty');
     if (trimmed.length > MAX_MESSAGE_LENGTH)
       throw new SenderError(`Message too long (max ${MAX_MESSAGE_LENGTH} characters)`);
+
+    const now = ctx.timestamp.microsSinceUnixEpoch;
+    const existing = ctx.db.rateLimitTracker.identity.find(ctx.sender);
+    if (existing) {
+      const elapsed = now - existing.windowStart.microsSinceUnixEpoch;
+      if (elapsed < RATE_LIMIT_WINDOW_MICROS) {
+        if (existing.count >= RATE_LIMIT_MAX_PER_WINDOW) {
+          throw new SenderError(
+            `Rate limit exceeded. Max ${RATE_LIMIT_MAX_PER_WINDOW} messages per minute. Try again later.`
+          );
+        }
+        ctx.db.rateLimitTracker.identity.update({
+          ...existing,
+          count: existing.count + 1n,
+        });
+      } else {
+        ctx.db.rateLimitTracker.identity.update({
+          ...existing,
+          windowStart: ctx.timestamp,
+          count: 1n,
+        });
+      }
+    } else {
+      ctx.db.rateLimitTracker.insert({
+        identity: ctx.sender,
+        windowStart: ctx.timestamp,
+        count: 1n,
+      });
+    }
 
     ctx.db.message.insert({
       id: 0n,
