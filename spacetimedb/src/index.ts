@@ -61,11 +61,15 @@ export const onDisconnect = spacetimedb.clientDisconnected(_ctx => {
   // Called every time a client disconnects
 });
 
+const MAX_MESSAGE_LENGTH = 2000;
+
 export const send_message = spacetimedb.reducer(
   { text: t.string() },
   (ctx, { text }) => {
     const trimmed = text.trim();
     if (!trimmed) throw new SenderError('Message text cannot be empty');
+    if (trimmed.length > MAX_MESSAGE_LENGTH)
+      throw new SenderError(`Message too long (max ${MAX_MESSAGE_LENGTH} characters)`);
 
     ctx.db.message.insert({
       id: 0n,

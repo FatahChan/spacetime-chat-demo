@@ -85,10 +85,14 @@ function ChatUI() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const MAX_MESSAGE_LENGTH = 2000;
+
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim() || !connected) return;
-    sendMessage({ text: text.trim() });
+    const trimmed = text.trim();
+    if (!trimmed || !connected) return;
+    if (trimmed.length > MAX_MESSAGE_LENGTH) return;
+    sendMessage({ text: trimmed });
     setText('');
   };
 
@@ -164,7 +168,7 @@ function ChatUI() {
           />
           <Button
             type="submit"
-            disabled={!connected || !text.trim()}
+            disabled={!connected || !text.trim() || text.length > MAX_MESSAGE_LENGTH}
             className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Send
