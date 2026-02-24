@@ -12,7 +12,9 @@
     "spacetime:generate": "spacetime generate --lang typescript --out-dir src/module_bindings --module-path spacetimedb",
     "spacetime:publish:local": "spacetime publish my-spacetime-app-6ali9 --module-path spacetimedb --server local",
     "spacetime:publish": "spacetime publish my-spacetime-app-6ali9 --module-path spacetimedb --server maincloud",
-    "spacetime:publish:clear": "spacetime publish my-spacetime-app-6ali9 --module-path spacetimedb --server maincloud --delete-data -y"
+    "spacetime:publish:clear": "spacetime publish my-spacetime-app-6ali9 --module-path spacetimedb --server maincloud --delete-data -y",
+    "netlify:deploy": "netlify deploy --prod",
+    "netlify:deploy:preview": "netlify deploy"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
@@ -28,11 +30,13 @@
     "spacetimedb": "^2.0.1"
   },
   "devDependencies": {
+    "@netlify/vite-plugin-tanstack-start": "^1.2.12",
     "@tailwindcss/vite": "^4.2.1",
     "@types/node": "^22.5.4",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "netlify-cli": "^24.0.0",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.7.2",
     "vite": "^7.1.5",

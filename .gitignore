@@ -9,3 +9,6 @@ dist
 *.log
 
 spacetime.local.json
+
+# Local Netlify folder
+.netlify
